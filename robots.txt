@@ -1,0 +1,5 @@
+# Robots.txt for Antham Enterprise
+User-agent: *
+Allow: /
+
+Sitemap: https://anthamenterprise.github.io/sitemap.xml
