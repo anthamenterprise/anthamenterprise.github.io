@@ -103,33 +103,79 @@ function handleFormDispatch(form, subjectPrefix, forceWhatsApp = false) {
   const formData = new FormData(form);
   const data = Object.fromEntries(formData.entries());
 
-  // Business Configuration Placeholders
-  const businessWhatsAppNumber = "+919875421001"; // International format without +
+  // =========================================================
+  // ANTHAM ENTERPRISE CONTACT CONFIGURATION
+  // =========================================================
+
+  const businessWhatsAppNumber = "919875421001";
   const businessEmailAddress = "anthamenterprise2024@gmail.com";
 
-  const messageBody = `*ANTHAM ENTERPRISE - ${subjectPrefix.toUpperCase()}*
+  // =========================================================
+  // BUILD MESSAGE
+  // =========================================================
+
+  const plainMessageBody = `
+ANTHAM ENTERPRISE - ${subjectPrefix.toUpperCase()}
+
+Name: ${data.name || "N/A"}
+Organisation: ${data.organisation || "N/A"}
+Phone: ${data.phone || "N/A"}
+Email: ${data.email || "N/A"}
+Category / Requirement: ${data.requirement || data.category || "General Sourcing"}
+Location / District: ${data.location || "West Bengal"}
+
+Requirement Details:
+${data.message || "Please contact us regarding procurement requirements."}
+
 ---------------------------------------
-*Name:* ${data.name || 'N/A'}
-*Organisation:* ${data.organisation || 'N/A'}
-*Phone:* ${data.phone || 'N/A'}
-*Email:* ${data.email || 'N/A'}
-*Category/Requirement:* ${data.requirement || data.category || 'General Sourcing'}
-*Location/District:* ${data.location || 'West Bengal'}
-*Message/Details:*
-${data.message || 'Please contact us regarding procurement requirements.'}
----------------------------------------
-Generated via Antham Enterprise Web Portal`;
+Generated via Antham Enterprise Website
+  `.trim();
+
+  // =========================================================
+  // WHATSAPP
+  // =========================================================
 
   if (forceWhatsApp) {
-    const encodedWa = encodeURIComponent(messageBody);
-    window.open(`https://wa.me/${businessWhatsAppNumber}?text=${encodedWa}`, '_blank', 'noopener,noreferrer');
-  } else {
-    const mailSubject = encodeURIComponent(`[Antham Enterprise RFQ] ${data.requirement || subjectPrefix} - ${data.organisation || data.name}`);
-    const mailBody = encodeURIComponent(messageBody);
-    window.location.href = `mailto:${businessEmailAddress}?subject=${mailSubject}&body=${mailBody}`;
-  }
-}
+    const encodedWa = encodeURIComponent(
+      `*ANTHAM ENTERPRISE - ${subjectPrefix.toUpperCase()}*\n\n` +
+      `*Name:* ${data.name || "N/A"}\n` +
+      `*Organisation:* ${data.organisation || "N/A"}\n` +
+      `*Phone:* ${data.phone || "N/A"}\n` +
+      `*Email:* ${data.email || "N/A"}\n` +
+      `*Category/Requirement:* ${data.requirement || data.category || "General Sourcing"}\n` +
+      `*Location/District:* ${data.location || "West Bengal"}\n\n` +
+      `*Requirement Details:*\n${data.message || "Please contact us regarding procurement requirements."}\n\n` +
+      `Generated via Antham Enterprise Website`
+    );
 
+    window.open(
+      `https://wa.me/${businessWhatsAppNumber}?text=${encodedWa}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    return;
+  }
+
+  // =========================================================
+  // EMAIL
+  // =========================================================
+
+  const mailSubject =
+    `[Antham Enterprise RFQ] ${data.requirement || subjectPrefix} - ${data.organisation || data.name}`;
+
+  const encodedSubject = encodeURIComponent(mailSubject);
+  const encodedBody = encodeURIComponent(plainMessageBody);
+
+  // Gmail Web Compose
+  const gmailUrl =
+    `https://mail.google.com/mail/?view=cm&fs=1` +
+    `&to=${encodeURIComponent(businessEmailAddress)}` +
+    `&su=${encodedSubject}` +
+    `&body=${encodedBody}`;
+
+  window.open(gmailUrl, "_blank", "noopener,noreferrer");
+}
 // Auto-update footer copyright year
 function initCurrentYear() {
   const yearSpans = document.querySelectorAll('.current-year');
