@@ -1,41 +1,51 @@
 /**
- * ANTHAM ENTERPRISE - Production Client-Side Utilities
- * Handles mobile navigation, header dynamics, and static form-to-WhatsApp/Email generator.
+ * ANTHAM ENTERPRISE - Mobile Navigation & Static RFQ Dispatcher
+ * Vanilla JavaScript (Zero Dependencies, Fully Compatible with GitHub Pages)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initMobileNav();
+  initMobileDrawer();
   initHeaderScroll();
-  initContactForms();
+  initStaticForms();
   initCurrentYear();
 });
 
-// Mobile Navigation Toggle
-function initMobileNav() {
+// Mobile Off-Canvas Drawer Navigation
+function initMobileDrawer() {
   const toggleBtn = document.querySelector('.mobile-toggle');
+  const closeBtn = document.querySelector('.mobile-close-btn');
   const navLinks = document.querySelector('.nav-links');
+  const backdrop = document.querySelector('.nav-backdrop');
 
   if (!toggleBtn || !navLinks) return;
 
-  toggleBtn.addEventListener('click', () => {
-    const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-    toggleBtn.setAttribute('aria-expanded', !isExpanded);
-    navLinks.classList.toggle('open');
-  });
+  const openMenu = () => {
+    navLinks.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    toggleBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden'; // Prevents background scroll
+  };
 
-  // Close menu on navigation click
+  const closeMenu = () => {
+    navLinks.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  };
+
+  toggleBtn.addEventListener('click', openMenu);
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+  if (backdrop) backdrop.addEventListener('click', closeMenu);
+
+  // Close when tapping any link inside the mobile menu
   navLinks.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
-      navLinks.classList.remove('open');
-      toggleBtn.setAttribute('aria-expanded', 'false');
-    });
+    link.addEventListener('click', closeMenu);
   });
 
-  // Close menu on click outside
-  document.addEventListener('click', (e) => {
-    if (!toggleBtn.contains(e.target) && !navLinks.contains(e.target) && navLinks.classList.contains('open')) {
-      navLinks.classList.remove('open');
-      toggleBtn.setAttribute('aria-expanded', 'false');
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      closeMenu();
     }
   });
 }
@@ -45,7 +55,7 @@ function initHeaderScroll() {
   const header = document.querySelector('.site-header');
   if (!header) return;
 
-  const handleScroll = () => {
+  const onScroll = () => {
     if (window.scrollY > 20) {
       header.classList.add('scrolled');
     } else {
@@ -53,26 +63,26 @@ function initHeaderScroll() {
     }
   };
 
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  handleScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
-// Inquiry Form to WhatsApp / Mailto (Static GitHub Pages compliant)
-function initContactForms() {
+// Static Form Handlers (Converts Form Input into WhatsApp & Mailto Links)
+function initStaticForms() {
   const rfqForm = document.getElementById('rfqForm');
   const vendorForm = document.getElementById('vendorForm');
+  const waBtn = document.getElementById('whatsappSubmitBtn');
 
   if (rfqForm) {
     rfqForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      handleFormDispatch(rfqForm, 'Procurement Requirement');
+      dispatchStaticMessage(rfqForm, 'Procurement Requirement', false);
     });
 
-    const waBtn = document.getElementById('whatsappSubmitBtn');
     if (waBtn) {
       waBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        handleFormDispatch(rfqForm, 'Procurement Requirement', true);
+        dispatchStaticMessage(rfqForm, 'Procurement Requirement', true);
       });
     }
   }
@@ -80,12 +90,12 @@ function initContactForms() {
   if (vendorForm) {
     vendorForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      handleFormDispatch(vendorForm, 'Vendor / Partner Registration');
+      dispatchStaticMessage(vendorForm, 'Vendor Partner Registration', false);
     });
   }
 }
 
-function handleFormDispatch(form, subjectPrefix, forceWhatsApp = false) {
+function dispatchStaticMessage(form, subjectPrefix, useWhatsApp = false) {
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
@@ -94,42 +104,38 @@ function handleFormDispatch(form, subjectPrefix, forceWhatsApp = false) {
   const formData = new FormData(form);
   const data = Object.fromEntries(formData.entries());
 
-  // Configured Placeholders for Antham Enterprise
-  // Replace these with actual business details prior to production
-  const businessWhatsAppNumber = "+919875421001"; // International format without +
-  const businessEmailAddress = "anthamenterprise2024@gmail.com";
+  // Business Configuration Placeholders
+  const businessWhatsApp = "+919875421001"; // International format without +
+  const businessEmail = "anthamenterprise2024@gmail.com";
 
-  const messageBody = `*ANTHAM ENTERPRISE - ${subjectPrefix.toUpperCase()}*
----------------------------------------
+  const messageText = `*ANTHAM ENTERPRISE - ${subjectPrefix.toUpperCase()}*
+----------------------------------------
 *Name:* ${data.name || 'N/A'}
 *Organisation:* ${data.organisation || 'N/A'}
 *Phone:* ${data.phone || 'N/A'}
 *Email:* ${data.email || 'N/A'}
-*Category/Requirement:* ${data.requirement || data.category || 'General Sourcing'}
-*Location/District:* ${data.location || 'West Bengal'}
+*Category/Scope:* ${data.requirement || data.category || 'General Sourcing'}
+*Site/Location:* ${data.location || 'West Bengal'}
 *Message/Details:*
-${data.message || 'Please contact us regarding procurement requirements.'}
----------------------------------------
-Generated via Antham Enterprise Web Portal`;
+${data.message || 'Please contact regarding requirement.'}
+----------------------------------------
+Transmitted via Antham Enterprise Static Web Portal`;
 
-  if (forceWhatsApp) {
-    const encodedWa = encodeURIComponent(messageBody);
-    const waUrl = `https://wa.me/${businessWhatsAppNumber}?text=${encodedWa}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+  if (useWhatsApp) {
+    const encoded = encodeURIComponent(messageText);
+    window.open(`https://wa.me/${businessWhatsApp}?text=${encoded}`, '_blank', 'noopener,noreferrer');
   } else {
-    // Generate Mailto Fallback
-    const mailSubject = encodeURIComponent(`[Antham Enterprise RFQ] ${data.requirement || subjectPrefix} - ${data.organisation || data.name}`);
-    const mailBody = encodeURIComponent(messageBody);
-    const mailtoUrl = `mailto:${businessEmailAddress}?subject=${mailSubject}&body=${mailBody}`;
-    window.location.href = mailtoUrl;
+    const subject = encodeURIComponent(`[Antham Enterprise RFQ] ${data.requirement || subjectPrefix} - ${data.organisation || data.name}`);
+    const body = encodeURIComponent(messageText);
+    window.location.href = `mailto:${businessEmail}?subject=${subject}&body=${body}`;
   }
 }
 
 // Auto-update footer copyright year
 function initCurrentYear() {
-  const yearSpans = document.querySelectorAll('.current-year');
-  const currentYear = new Date().getFullYear();
-  yearSpans.forEach(span => {
-    span.textContent = currentYear;
+  const spans = document.querySelectorAll('.current-year');
+  const year = new Date().getFullYear();
+  spans.forEach(span => {
+    span.textContent = year;
   });
 }
